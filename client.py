@@ -45,19 +45,19 @@ while running:
         print(feedback_message)
     
         if feedback_message.startswith(success_message):
-            # print(clientsocket.recv(1024).decode("utf-8")) # scorul sau
         
-            # # receive question for another round
-            # print(clientsocket.recv(1024).decode("utf-8"))
-            # agreement = input(">>")
-            # clientsocket.send(string_to_bytes((agreement)))
-        
-            # # if "da" => continue; else => break
-            # if agreement=="nu":
-            #     break
-            # else:
-            #     continue
-            running=False
+            # receive question for another round
+            print(clientsocket.recv(1024).decode("utf-8"))
+            agreement = input(">>")
+            clientsocket.send(string_to_bytes((agreement)))
+            
+            ## evalueaza raspunsul pt o noua runda
+            if agreement=="nu":
+                break
+            else:
+                running=True
+                continue
+            
         elif feedback_message==less_than_message or feedback_message==greater_than_message:
             running=True
         else:
@@ -65,6 +65,5 @@ while running:
             break
 
    
-
 print(clientsocket.recv(1024).decode("utf-8")) # scorul sau
 clientsocket.close()
