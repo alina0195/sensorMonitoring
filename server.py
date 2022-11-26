@@ -1,13 +1,17 @@
-import socket                                         
+import socket
 import random
-import sys
 
-welcome_message = "Bun venit! Daca doresti sa parasesti jocul tasteaza litera q."
+
+host = '127.0.0.1'
+port = 9999
+MAX_VAL = 100000
+
+welcome_message = "Bun venit! Daca doresti sa parasesti jocul tasteaza litera q.\nIncearca sa ghicesti numarul:"
 success_message = "Numarul este corect"
 less_than_message = "Numarul este mai mic decat numarul ales"
 greater_than_message = "Numarul este mai mare decat numarul ales"
 start_message = "Jocul a inceput. Introduce prima ta incercare "
-continue_question_message = "Continui? da/nu : "
+continue_question_message = "Continui? da/nu"
 
 def string_to_bytes(str):
     return bytes(str,'ascii')
@@ -20,90 +24,138 @@ def generate_random_number():
     print(f'Am generat: {nb}')
     return nb
 
-try:
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-except socket.error as e:
-     print ("Error creating socket: %s" % e)
-     sys.exit(1)
+# def client1_handler_2players(connection, nr, adv_conn):
+#     while True:
+#         res = connection.recv(2048).decode('utf-8')
+#         if res == str(nr):
+#             connection.send(str.encode("Felicitaari"))
+#             adv_conn.send(str.encode("Felicitaari"))
+#             break
+#         elif res =='BYE':
+#             adv_conn.send(str.encode("BYE"))
+#             break
+#         else:
+#             # trimite notificare catre client 
+#             connection.send(str.encode("E mai mare sau mai mic"))
+#             adv_conn.send(str.encode("E mai mare sau mai mic"))
+#         scor += 1
+#     return scor
 
-try:
-    host = socket.gethostname() 
-    port = 9999                                           
-    serversocket.bind((host, port)) 
-except socket.gaierror as e:
-    print ("Address-related error connecting to server: %s" % e) 
-    sys.exit(1)
-except socket.error as e: 
-    print ("Connection error: %s" % e) 
-    sys.exit(1) 
-    
-serversocket.listen(2) 
-generated_number = generate_random_number()
-
-MAX_VAL = 100000
-current_score = 0
-min_score = MAX_VAL
-
-
-clientsocket1,addr1 = serversocket.accept()      
-print("Conexiune de la %s" % str(addr1))
-
-try:
-    clientsocket1.send(string_to_bytes(welcome_message))
-except socket.error as e: 
-    print (f'Error sending data: {e}') 
-    sys.exit(1)
-try:
-    clientsocket1.send(string_to_bytes(start_message))
-except socket.error as e: 
-    print (f'Error sending data: {e}') 
-    sys.exit(1)
-
-try:
+def client1_handler_2players(connection,nr, adv_conn):
+    connection.send(str.encode(welcome_message))
+    current_score = 0
+    min_score = MAX_VAL
     while True:
-        try:
-            received = clientsocket1.recv(1024).decode('utf-8')
-            if str(received).lower().strip().startswith('q'):
-                print("Clientul a parasit jocul")
-                if min_score==MAX_VAL:
-                    min_score=0
-                break
-            else:
-                received_number = int(received)
-                print(f'Am primit {received_number} ')
-        except socket.error as e:
-            print(f'Error receiving data: {e}')
-
-        current_score +=1
+        res = connection.recv(1024).decode('utf-8')
+        if res =='q':
+            adv_conn.send(str.encode(res))
+            if min_score==MAX_VAL:
+                min_score=0 # e prima runda si doreste sa paraseasca jocul
+            break
         
-        if received_number == generated_number:
-            clientsocket1.send(string_to_bytes(success_message))
+        current_score +=1
+        if res == str(nr):
+            connection.send(str.encode(success_message))
+            adv_conn.send(str.encode(success_message))
+            
             if current_score < min_score:
                 min_score=current_score
-            # intreaba daca vrea inca o runda
-            clientsocket1.send(string_to_bytes("O noua runda? da/nu"))
+            connection.send(str.encode(continue_question_message))
+            agreement = connection.recv(1024).decode('utf-8')
+            adv_conn.send(str.encode(agreement))
             
-            # primeste raspuns
-            agreement = clientsocket1.recv(1024).decode('utf-8')
-            
-            ##evalueaza raspunsul pt o noua runda
-            # daca da => genereaza un nou nr random + continue
-            if agreement.startswith("da"):
-                generated_number = generate_random_number()
+            if agreement=="da":
                 current_score=0
+                nr = int(adv_conn.recv(1024).decode('utf-8'))
                 continue
-            else:
+            else: 
                 break
-            # daca nu => break
-        elif received_number < generated_number:
-            clientsocket1.send(string_to_bytes(greater_than_message))
-        else:
-            clientsocket1.send(string_to_bytes(less_than_message))
 
-    clientsocket1.send(string_to_bytes('\nScorul tau maxim: ' + str(min_score)))
+        elif int(res)<nr:
+            connection.send(str.encode(greater_than_message))
+            adv_conn.send(str.encode(greater_than_message))
+            
+        elif int(res)>nr:
+            connection.send(str.encode(less_than_message))
+            adv_conn.send(str.encode(less_than_message))
+            
+    return min_score  
+
+
+def client1_handler_1player(connection,nr):
+    connection.send(str.encode(welcome_message))
+    current_score = 0
+    min_score = MAX_VAL
+    while True:
+        res = connection.recv(1024).decode('utf-8')
+        if res =='q':
+            if min_score==MAX_VAL:
+                min_score=0 # e prima runda si doreste sa paraseasca jocul
+            break
+        
+        current_score +=1
+        if res == str(nr):
+            connection.send(str.encode(success_message))
+            if current_score < min_score:
+                min_score=current_score
+            connection.send(str.encode(continue_question_message))
+            agreement = connection.recv(1024).decode('utf-8')
+            if agreement.startswith("da"):
+                current_score=0
+                nr = generate_random_number()
+                continue
+            else: 
+                break
+
+        elif int(res)<nr:
+            connection.send(str.encode(greater_than_message))
+        elif int(res)>nr:
+            connection.send(str.encode(less_than_message))
     
-except socket.error as e:
-    print(f'Erori in comunicarea cu clientul')
-finally:
-    clientsocket1.close()
+    return min_score    
 
+
+def client2_handler(connection):
+    connection.send(str.encode(welcome_message))
+    nr = int(connection.recv(1024).decode('utf-8'))
+    return nr
+
+
+def accept_one_connection(ServerSocket):
+    Client, address = ServerSocket.accept()
+    print('Connected to: ' + address[0] + ':' + str(address[1]))
+    generated_number = generate_random_number()
+    min_score = client1_handler_1player(Client, generated_number)
+    Client.send(str.encode('Scor maxim: '+str(min_score)))
+    Client.close()
+
+
+def accept_two_connections(ServerSocket):
+    Client1, address1 = ServerSocket.accept()
+    print('Connected to: ' + address1[0] + ':' + str(address1[1]))
+    Client2, address2 = ServerSocket.accept()
+    print('Connected to: ' + address2[0] + ':' + str(address2[1]))
+    nr = client2_handler(Client2)
+    min_score = client1_handler_2players(Client1,nr, Client2)
+    Client1.send(str.encode('Scor: '+str(min_score)))
+    Client2.send(str.encode('Scor: '+str(min_score)))
+    Client2.close()
+    Client1.close()
+    
+
+def start_server(host, port):
+    ServerSocket = socket.socket()
+    try:
+        ServerSocket.bind((host, port))
+    except socket.error as e:
+        print(str(e))
+
+    print(f'Server is listing on the port {port}...')
+    ServerSocket.listen(2)
+    option = input("Type number of players[1 or 2]\n>>")
+    if option=='1':
+        accept_one_connection(ServerSocket)
+    elif option=='2':
+        accept_two_connections(ServerSocket)
+
+start_server(host, port)
