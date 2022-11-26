@@ -65,9 +65,7 @@ try:
             received = clientsocket1.recv(1024).decode('utf-8')
             if str(received).lower().strip().startswith('q'):
                 print("Clientul a parasit jocul")
-                ## trebuie doar sa ii mai trimita scorul
                 if min_score==MAX_VAL:
-                    # e prima runda si clientul a iesit fara sa ghiceasca
                     min_score=0
                 break
             else:
