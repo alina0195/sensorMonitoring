@@ -56,12 +56,16 @@ try:
             value_tried = input(">> ")
             if value_tried.isnumeric():
                 break
+            elif value_tried.lower().strip()=='q':
+                print('Parasire joc...')
+                running=False
+                break
             else:
-                print('Invalid. Introduceti un numar valid!')
+                print('Invalid. Introduceti un numar valid sau parasiti jocul (q)!')
                 continue
         
         #ii trimite cu certitudine un numar valid 
-        clientsocket.send(int_to_bytes(int(value_tried)))
+        clientsocket.send(str(value_tried).encode('utf-8'))
         
         if running: #a introdus un numar valid
             feedback_message = clientsocket.recv(1024).decode("utf-8")

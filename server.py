@@ -40,9 +40,9 @@ except socket.error as e:
 serversocket.listen(2) 
 generated_number = generate_random_number()
 
-
+MAX_VAL = 100000
 current_score = 0
-min_score = 100000
+min_score = MAX_VAL
 
 
 clientsocket1,addr1 = serversocket.accept()      
@@ -62,8 +62,17 @@ except socket.error as e:
 try:
     while True:
         try:
-            received_number = int.from_bytes(clientsocket1.recv(1024), "big")
-            print(f'Am primit {received_number} ')
+            received = clientsocket1.recv(1024).decode('utf-8')
+            if str(received).lower().strip().startswith('q'):
+                print("Clientul a parasit jocul")
+                ## trebuie doar sa ii mai trimita scorul
+                if min_score==MAX_VAL:
+                    # e prima runda si clientul a iesit fara sa ghiceasca
+                    min_score=0
+                break
+            else:
+                received_number = int(received)
+                print(f'Am primit {received_number} ')
         except socket.error as e:
             print(f'Error receiving data: {e}')
 
@@ -71,11 +80,10 @@ try:
         
         if received_number == generated_number:
             clientsocket1.send(string_to_bytes(success_message))
-            if min_score > current_score:
+            if current_score < min_score:
                 min_score=current_score
-                
             # intreaba daca vrea inca o runda
-            clientsocket1.send(string_to_bytes("O noua runda? Testeaza da/nu"))
+            clientsocket1.send(string_to_bytes("O noua runda? da/nu"))
             
             # primeste raspuns
             agreement = clientsocket1.recv(1024).decode('utf-8')
