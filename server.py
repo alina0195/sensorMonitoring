@@ -13,8 +13,6 @@ greater_than_message = "Numarul este mai mare decat numarul ales"
 start_message = "Jocul a inceput. Introduce prima ta incercare "
 continue_question_message = "Continui? da/nu"
 
-def string_to_bytes(str):
-    return bytes(str,'ascii')
 
 def int_to_bytes(integer):
     return integer.to_bytes(2,'big')
@@ -24,22 +22,6 @@ def generate_random_number():
     print(f'Am generat: {nb}')
     return nb
 
-# def client1_handler_2players(connection, nr, adv_conn):
-#     while True:
-#         res = connection.recv(2048).decode('utf-8')
-#         if res == str(nr):
-#             connection.send(str.encode("Felicitaari"))
-#             adv_conn.send(str.encode("Felicitaari"))
-#             break
-#         elif res =='BYE':
-#             adv_conn.send(str.encode("BYE"))
-#             break
-#         else:
-#             # trimite notificare catre client 
-#             connection.send(str.encode("E mai mare sau mai mic"))
-#             adv_conn.send(str.encode("E mai mare sau mai mic"))
-#         scor += 1
-#     return scor
 
 def client1_handler_2players(connection,nr, adv_conn):
     connection.send(str.encode(welcome_message))
@@ -70,7 +52,6 @@ def client1_handler_2players(connection,nr, adv_conn):
                 continue
             else: 
                 break
-
         elif int(res)<nr:
             connection.send(str.encode(greater_than_message))
             adv_conn.send(str.encode(greater_than_message))

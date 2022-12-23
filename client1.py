@@ -6,15 +6,6 @@ success_message = "Numarul este corect"
 less_than_message = "Numarul este mai mic decat numarul ales"
 greater_than_message = "Numarul este mai mare decat numarul ales"
 
-def string_to_bytes(str):
-    return bytes(str,'ascii')
-
-def int_to_bytes(integer):
-    return integer.to_bytes(2,'big')
-
-def negative_int_to_bytes(integer):
-    return integer.to_bytes(1, byteorder='big', signed=True)
-
 
 ClientSocket = socket.socket()
 print('Asptept sa ma conectez')
